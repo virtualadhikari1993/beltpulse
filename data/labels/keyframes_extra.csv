@@ -1,0 +1,25 @@
+video,keyframe_id,pass_start,pass_end,reason
+boardcamera_iron_ore_7_wood_2,2402,2362,2455,rolling 2382->2421 off by 90px
+boardcamera_iron_ore_7_wood_2,2746,2688,2831,rolling 2716->2777 off by 70px
+boardcamera_iron_ore_7_wood_2,2790,2688,2831,rolling 2777->2829 off by 114px
+boardcamera_iron_ore_7_wood_2,2803,2688,2831,rolling 2777->2829 off by 114px
+boardcamera_iron_ore_7_wood_2,2816,2688,2831,rolling 2777->2829 off by 114px
+boardcamera_iron_ore_7_wood_3,2416,2388,2467,rolling 2402->2430 off by 64px
+boardcamera_iron_ore_7_wood_3,2437,2388,2467,rolling 2430->2458 off by 110px
+boardcamera_iron_ore_7_wood_3,2444,2388,2467,rolling 2430->2458 off by 110px
+boardcamera_iron_ore_7_wood_3,2451,2388,2467,rolling 2430->2458 off by 110px
+boardcamera_iron_ore_7_wood_3,2753,2725,2776,rolling 2739->2767 off by 62px
+boardcamera_iron_ore_canga,1938,1906,2020,rolling 1921->1954 off by 67px
+boardcamera_iron_ore_canga2,2638,2611,2700,rolling 2629->2665 off by 157px
+boardcamera_iron_ore_canga2,2647,2611,2700,rolling 2629->2665 off by 157px
+boardcamera_iron_ore_canga2,2656,2611,2700,rolling 2629->2665 off by 157px
+boardcamera_iron_ore_canga2,3156,3121,3198,rolling 3142->3196 off by 107px
+boardcamera_iron_ore_canga2,3169,3121,3198,rolling 3142->3196 off by 107px
+boardcamera_iron_ore_canga2,3182,3121,3198,rolling 3142->3196 off by 107px
+boardcamera_iron_ore_canga3,1850,1831,1865,rolling 1841->1860 off by 67px
+boardcamera_iron_ore_jaspilito_3,2414,2380,2436,rolling 2397->2430 off by 63px
+boardcamera_iron_ore_jaspilito_4,1901,1885,1922,rolling 1896->1917 off by 161px
+boardcamera_iron_ore_jaspilito_4,1906,1885,1922,rolling 1896->1917 off by 161px
+boardcamera_iron_ore_jaspilito_4,1912,1885,1922,rolling 1896->1917 off by 161px
+boardcamera_iron_ore_things,3486,3442,3537,rolling 3465->3507 off by 66px
+boardcamera_iron_ore_things_2,2558,2518,2613,rolling 2539->2578 off by 66px

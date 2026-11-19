@@ -1,0 +1,6 @@
+numpy
+opencv-python
+matplotlib
+tqdm
+jupyter
+# torch + torchvision: install separately with the CUDA index URL (see README.md)

@@ -1,0 +1,13 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# Dataset (6 GB, CC BY 4.0): download from https://data.mendeley.com/datasets/s25x2bnshz/1
+*.zip
+data/raw/
+
+# Regenerable caches and trained weights (step 05 features ~1+ GB; models from step 06/10)
+data/features/
+data/models/
+*.pt
