@@ -1,0 +1,82 @@
+{
+"reports/final_report/figs/alignment.png": [
+2240,
+558
+],
+"reports/final_report/figs/baselines.png": [
+2240,
+498
+],
+"reports/final_report/figs/model.png": [
+2240,
+458
+],
+"reports/final_report/figs/per_object.png": [
+2240,
+394
+],
+"reports/final_report/figs/pipeline.png": [
+2240,
+684
+],
+"reports/final_report/figs/sample.png": [
+2240,
+648
+],
+"reports/final_report/figs/trust.png": [
+2240,
+658
+],
+"outputs/04_samples/glare_examples.jpg": [
+1920,
+704
+],
+"outputs/03_labeling/propagation_iron_ore_canga2.jpg": [
+2560,
+720
+],
+"outputs/02_belt_motion/dx_boardcamera_iron_ore_canga3.png": [
+800,
+240
+],
+"outputs/06_train/full_T8w7/curves.png": [
+1080,
+360
+],
+"outputs/07_eval/full/examples_02.jpg": [
+1920,
+176
+],
+"outputs/07_eval/full/examples_05.jpg": [
+1920,
+176
+],
+"outputs/07_eval/full_T8w7/examples_05.jpg": [
+1920,
+176
+],
+"outputs/07_eval/full_T8w7/examples_03.jpg": [
+1920,
+176
+],
+"outputs/08_attention/full_T8w7/square_00_A_glare.jpg": [
+1344,
+1550
+],
+"outputs/04_samples/box_to_grid.jpg": [
+3840,
+704
+],
+"outputs/01_explore/anomaly_samples.jpg": [
+1280,
+290
+],
+"outputs/03_labeling/correction_iron_ore_canga2.jpg": [
+1920,
+720
+],
+"outputs/07_eval/full_T8w7/pr_curves.png": [
+1170,
+450
+]
+}

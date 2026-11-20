@@ -14,3 +14,4 @@ data/models/
 
 # Run logs
 outputs/logs/
+node_modules/
