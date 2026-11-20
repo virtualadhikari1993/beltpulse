@@ -60,3 +60,8 @@ The A/B example shows the transformer *can* beat **voting on decisions**. It doe
    and run-to-run noise (±0.05) is as large as the gap between models.
 4. **Hard cases are rare.** Most test squares are easy, so a gain on a few A/B-like squares barely moves the average IoU.
    Report the hard cases separately (real glare, many glared views, rolling intervals).
+
+### What is learned vs what is computed
+The saved model holds three learned 96×96 matrices (W_q, W_k, W_v) plus view and window-position embeddings: a *rule* for judging patches.
+The trust weights (27 per square, summing to 1) are computed again for every square of every photo at prediction time and are not saved.
+Drawn step by step in `docs/pipeline_architecture.html`, section "How the trust is computed".

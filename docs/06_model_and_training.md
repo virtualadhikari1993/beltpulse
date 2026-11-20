@@ -69,3 +69,13 @@ All six share the same code; only step 2/3 changes.
 - Left: training loss (solid) keeps falling. Validation loss (dashed) flattens after ~8 epochs.
   That gap is **overfitting**: with only 100 examples the model starts memorising them. More data (the full run) is the cure.
 - Right: validation object IoU per epoch. Jumpy, because only 25 validation samples.
+
+## What the bottleneck and the feed-forward layers are for
+- **Bottleneck** (`self.proj`: 1×1 conv 256→96, BatchNorm, ReLU, 1×1 conv 96→96, ~34k numbers). ResNet is frozen and was trained on everyday photos,
+  so its 256 numbers describe "fur, wheels, sky". The bottleneck is the only place where the per-square description can be *re-learned* for
+  ore / wood / plastic / glare. It also shrinks 256 → 96, which makes attention cheaper and leaves fewer numbers to overfit with 2,716 samples.
+  1×1 means it looks at one square at a time, never its neighbours.
+- **Feed-forward** (`self.ff1`, and one inside `self.spatial`: 96→192→96 with GELU, ~18k numbers each). Attention only *gathers*: its output is a weighted
+  average of other patches. The feed-forward network then *processes* each square's gathered vector on its own and can form combinations an
+  average cannot, e.g. "bright AND seen in only one view → glare" vs "bright AND seen in all views → white plastic".
+  Each sits inside `x + layer(x)` (residual) and a LayerNorm, so the original information is kept and the numbers stay in a stable range.

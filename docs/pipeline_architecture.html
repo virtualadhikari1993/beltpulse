@@ -1,0 +1,524 @@
+<title>BeltPulse-Net Pipeline</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@600&family=IBM+Plex+Sans:wght@400;600&display=swap">
+<style>
+/* Layout: one reading column for text, wide schematic plates for diagrams; colour encodes role (trained / fixed rule / frozen). */
+:root {
+  --bg: #f4f6f7;
+  --surface: #ffffff;
+  --fg: #1a2128;
+  --muted: #56626d;
+  --line: #c6ced5;
+  --learn: #0d7a72;
+  --learn-bg: #e1f1ef;
+  --fixed: #a8650a;
+  --fixed-bg: #f9eedb;
+  --frozen: #66717c;
+  --frozen-bg: #e9edf0;
+  --sans: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --cond: "IBM Plex Sans Condensed", "IBM Plex Sans", "Arial Narrow", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #12171b; --surface: #1a2127; --fg: #e3e8ec; --muted: #9ba7b1; --line: #36414b;
+    --learn: #4fc3b8; --learn-bg: #12322f; --fixed: #e2a54f; --fixed-bg: #372a15;
+    --frozen: #a5afb8; --frozen-bg: #252d34; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #12171b; --surface: #1a2127; --fg: #e3e8ec; --muted: #9ba7b1; --line: #36414b;
+  --learn: #4fc3b8; --learn-bg: #12322f; --fixed: #e2a54f; --fixed-bg: #372a15;
+  --frozen: #a5afb8; --frozen-bg: #252d34; color-scheme: dark;
+}
+body { background: var(--bg); color: var(--fg); font-family: var(--sans); font-size: 15px; line-height: 1.6; }
+.wrap { max-width: 1180px; margin: 0 auto; padding-block: 40px 64px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: flex; flex-direction: column; gap: 44px; }
+header { display: flex; flex-direction: column; gap: 12px; }
+.eyebrow { font-family: var(--mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+h1 { font-family: var(--cond); font-weight: 600; font-size: clamp(30px, 4.4vw, 46px); line-height: 1.1; margin: 0; text-wrap: balance; }
+h2 { font-family: var(--cond); font-weight: 600; font-size: 24px; line-height: 1.2; margin: 0; text-wrap: balance; }
+p { margin: 0; max-width: 70ch; }
+section { display: flex; flex-direction: column; gap: 16px; }
+.legend { display: flex; flex-wrap: wrap; gap: 10px 22px; font-size: 13.5px; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: 8px; }
+.sw { width: 22px; height: 14px; border-radius: 3px; border: 1.5px solid; display: inline-block; }
+.sw.l { background: var(--learn-bg); border-color: var(--learn); }
+.sw.f { background: var(--fixed-bg); border-color: var(--fixed); }
+.sw.z { background: var(--frozen-bg); border-color: var(--frozen); }
+figure { margin: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 18px 18px 14px; display: flex; flex-direction: column; gap: 12px; }
+.scroll { overflow-x: auto; }
+.scroll svg { display: block; width: 100%; min-width: 880px; height: auto; }
+figcaption { font-size: 13.5px; color: var(--muted); max-width: 90ch; }
+code, .mono { font-family: var(--mono); font-size: .9em; }
+/* svg roles */
+svg { color: var(--muted); font-family: var(--sans); }
+svg .t { fill: var(--fg); font-size: 13.5px; font-weight: 600; }
+svg .s { fill: var(--muted); font-size: 11.5px; }
+svg .a { fill: var(--muted); font-size: 11px; font-family: var(--mono); }
+svg .h { fill: var(--fg); font-size: 13px; font-weight: 600; font-family: var(--cond); letter-spacing: .02em; }
+svg .e { stroke: currentColor; stroke-width: 1.4; fill: none; }
+svg .dash { stroke: var(--line); stroke-width: 1.2; stroke-dasharray: 5 5; fill: none; }
+svg .bl { fill: var(--learn-bg); stroke: var(--learn); stroke-width: 1.5; }
+svg .bf { fill: var(--fixed-bg); stroke: var(--fixed); stroke-width: 1.5; }
+svg .bz { fill: var(--frozen-bg); stroke: var(--frozen); stroke-width: 1.5; }
+svg .bp { fill: var(--surface); stroke: var(--line); stroke-width: 1.5; }
+svg .slot { fill: var(--learn-bg); stroke: var(--learn); stroke-width: 2; stroke-dasharray: 7 4; }
+svg .cellbg { fill: var(--surface); stroke: var(--line); stroke-width: 1; }
+svg .gl { stroke: var(--line); stroke-width: 1; fill: none; }
+svg .gl2 { stroke: var(--line); stroke-width: .6; fill: none; }
+td.mono { white-space: nowrap; }
+svg .rock { fill: var(--fixed); }
+svg .rockg { fill: var(--fixed); opacity: .3; }
+svg .win { fill: none; stroke: var(--learn); stroke-width: 2.5; }
+svg .bar { fill: var(--learn); }
+svg .acc { fill: var(--learn); font-size: 11.5px; font-family: var(--mono); }
+table { border-collapse: collapse; font-size: 14px; min-width: 640px; width: 100%; }
+th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-family: var(--cond); font-weight: 600; font-size: 13.5px; letter-spacing: .02em; color: var(--muted); }
+td:first-child { font-family: var(--mono); font-size: 13px; white-space: nowrap; }
+.tbl { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; }
+.pill { font-family: var(--mono); font-size: 12px; padding: 1px 8px; border-radius: 99px; border: 1px solid; white-space: nowrap; }
+.pill.ok { color: var(--learn); border-color: var(--learn); }
+.pill.no { color: var(--fixed); border-color: var(--fixed); }
+ol.run { margin: 0; padding-left: 22px; display: flex; flex-direction: column; gap: 8px; max-width: 80ch; }
+ol.run li::marker { font-family: var(--mono); color: var(--muted); }
+pre { margin: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-family: var(--mono); font-size: 13px; line-height: 1.55; }
+</style>
+
+<div class="wrap">
+
+<header>
+  <div class="eyebrow">IITH MTech project · iron-ore conveyor · state before the full run</div>
+  <h1>BeltPulse-Net pipeline</h1>
+  <p>Finds foreign objects (wood, plastic, canga, jaspilito, tools) on an iron-ore belt. The belt's own motion lines up several photos of the same object. The models then combine those views, so one glared or blurred photo matters less.</p>
+  <div class="legend" aria-label="Colour legend">
+    <span><i class="sw l"></i>trained (learns from labels)</span>
+    <span><i class="sw f"></i>fixed physics or rule (no learning)</span>
+    <span><i class="sw z"></i>data or frozen pretrained network</span>
+  </div>
+</header>
+
+<section>
+  <h2>The whole pipeline</h2>
+  <p>Steps 01–05 prepare data once. Step 06 trains the per-frame models on cached features, and steps 07, 08 and 10 use the trained models.</p>
+  <figure>
+    <div class="scroll">
+    <svg viewBox="0 0 1120 340" role="img" aria-label="Pipeline: raw frames, belt motion, labels, samples and frozen ResNet features feed training of six per-frame models; their outputs go to evaluation, attention pictures and the per-object tracker that produces one decision per object.">
+      <defs><marker id="m1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="currentColor"/></marker></defs>
+      <!-- row 1 -->
+      <rect class="bz" x="20" y="30" width="160" height="84" rx="6"/>
+      <text class="t" x="32" y="58">Raw frames</text><text class="s" x="32" y="80">19 videos, 120 fps</text><text class="s" x="32" y="98">≈ 26,460 frames</text>
+      <rect class="bf" x="250" y="30" width="160" height="84" rx="6"/>
+      <text class="t" x="262" y="58">02 Belt motion</text><text class="s" x="262" y="80">phase correlation</text><text class="s" x="262" y="98">dx per frame pair</text>
+      <rect class="bf" x="480" y="30" width="160" height="84" rx="6"/>
+      <text class="t" x="492" y="58">03 Labels</text><text class="s" x="492" y="80">91 LLM keyframes</text><text class="s" x="492" y="98">physics → 2,949 frames</text>
+      <rect class="bf" x="710" y="30" width="160" height="84" rx="6"/>
+      <text class="t" x="722" y="58">04 Samples</text><text class="s" x="722" y="80">views t−k, t, t+k</text><text class="s" x="722" y="98">+ synthetic glare</text>
+      <rect class="bz" x="940" y="30" width="160" height="84" rx="6"/>
+      <text class="t" x="952" y="58">05 Features</text><text class="s" x="952" y="80">frozen ResNet-18</text><text class="s" x="952" y="98">256×22×40 per photo</text>
+      <line class="e" x1="180" y1="72" x2="246" y2="72" marker-end="url(#m1)"/><text class="a" x="215" y="64" text-anchor="middle">frames</text>
+      <line class="e" x1="410" y1="72" x2="476" y2="72" marker-end="url(#m1)"/><text class="a" x="445" y="64" text-anchor="middle">shift</text>
+      <line class="e" x1="640" y1="72" x2="706" y2="72" marker-end="url(#m1)"/><text class="a" x="675" y="64" text-anchor="middle">boxes</text>
+      <line class="e" x1="870" y1="72" x2="936" y2="72" marker-end="url(#m1)"/><text class="a" x="905" y="64" text-anchor="middle">photos</text>
+      <!-- link row1 -> row2 -->
+      <path class="e" d="M1020 114V157H100V196" marker-end="url(#m1)"/>
+      <text class="a" x="560" y="177" text-anchor="middle">cached features + white-pixel grids</text>
+      <!-- row 2 -->
+      <rect class="bl" x="20" y="200" width="160" height="84" rx="6"/>
+      <text class="t" x="32" y="228">06 Train</text><text class="s" x="32" y="250">6 per-frame models</text><text class="s" x="32" y="268">on 3 or 8 views</text>
+      <rect class="bp" x="250" y="200" width="160" height="84" rx="6"/>
+      <text class="t" x="262" y="228">07 Evaluate</text><text class="s" x="262" y="250">5 unseen test videos</text><text class="s" x="262" y="268">+ votes, AP, PR curves</text>
+      <rect class="bp" x="480" y="200" width="160" height="84" rx="6"/>
+      <text class="t" x="492" y="228">08 Attention</text><text class="s" x="492" y="250">which view is trusted</text><text class="s" x="492" y="268">at each square</text>
+      <rect class="bl" x="710" y="200" width="160" height="84" rx="6"/>
+      <text class="t" x="722" y="228">10 Per object</text><text class="s" x="722" y="250">tracker + sequence</text><text class="s" x="722" y="268">transformer</text>
+      <rect class="bp" x="940" y="200" width="160" height="84" rx="6"/>
+      <text class="t" x="952" y="228">Sorter output</text><text class="s" x="952" y="250">one call per object</text><text class="s" x="952" y="268">type + count</text>
+      <line class="e" x1="180" y1="242" x2="246" y2="242" marker-end="url(#m1)"/><text class="a" x="215" y="234" text-anchor="middle">weights</text>
+      <line class="e" x1="410" y1="242" x2="476" y2="242" marker-end="url(#m1)"/><text class="a" x="445" y="234" text-anchor="middle">models</text>
+      <line class="e" x1="870" y1="242" x2="936" y2="242" marker-end="url(#m1)"/><text class="a" x="905" y="234" text-anchor="middle">tracks</text>
+      <path class="e" d="M100 284V312H790V288" marker-end="url(#m1)"/>
+      <text class="a" x="445" y="330" text-anchor="middle">trained `single` model used as the per-frame detector</text>
+    </svg>
+    </div>
+    <figcaption>Only the teal boxes learn anything. Belt motion, label propagation and sample building are physics and fixed rules. ResNet-18 is pretrained on ImageNet and never updated, so its features are computed once and cached.</figcaption>
+  </figure>
+</section>
+
+<section>
+  <h2>One sample, start to finish</h2>
+  <p>A real training sample from video <code>7_wood</code>: target frame t = 2437, k = 12, so the views are frames 2425, 2437 and 2449. A wooden stick lies at x 784–1280, y 153–433 px, and the middle photo has painted glare.</p>
+  <figure>
+    <div class="scroll">
+    <svg viewBox="0 0 1110 320" role="img" aria-label="A 1280 by 720 camera frame is halved to 640 by 352 pixels, which is 40 by 22 squares of 16 pixels. ResNet turns each photo into 256 numbers per square. The stick's box becomes a 22 by 40 answer grid with 144 squares set to 1. One sample holds three such feature grids, three belt shifts and the answer grid.">
+      <defs>
+        <marker id="m6" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="currentColor"/></marker>
+        <pattern id="sq" width="4" height="4" patternUnits="userSpaceOnUse"><path d="M4 0V4H0" class="gl2"/></pattern>
+      </defs>
+      <!-- camera frame -->
+      <rect class="bz" x="20" y="50" width="192" height="108" rx="3"/>
+      <rect class="rock" x="137.6" y="73" width="74.4" height="42" opacity=".85"/>
+      <text class="t" x="20" y="36">Camera frame</text>
+      <text class="a" x="116" y="176" text-anchor="middle">1280 × 720 px</text>
+      <!-- model photo with grid -->
+      <line class="e" x1="212" y1="104" x2="286" y2="104" marker-end="url(#m6)"/><text class="a" x="249" y="96" text-anchor="middle">resize ½</text>
+      <text class="t" x="290" y="36">Model photo</text>
+      <rect class="bz" x="290" y="60" width="160" height="88"/>
+      <rect class="rock" x="388" y="79" width="62" height="35" opacity=".85"/>
+      <rect x="290" y="60" width="160" height="88" fill="url(#sq)"/>
+      <text class="a" x="370" y="166" text-anchor="middle">640 × 352 px</text>
+      <text class="a" x="370" y="181" text-anchor="middle">= 40 × 22 squares of 16 px</text>
+      <!-- resnet cube -->
+      <line class="e" x1="450" y1="104" x2="536" y2="104" marker-end="url(#m6)"/><text class="a" x="493" y="96" text-anchor="middle">ResNet-18</text>
+      <text class="t" x="540" y="36">Features of one photo</text>
+      <rect class="bz" x="556" y="44" width="160" height="88"/>
+      <rect class="bz" x="548" y="52" width="160" height="88"/>
+      <rect class="bz" x="540" y="60" width="160" height="88"/>
+      <rect x="540" y="60" width="160" height="88" fill="url(#sq)"/>
+      <text class="a" x="628" y="166" text-anchor="middle">256 × 22 × 40</text>
+      <text class="a" x="628" y="181" text-anchor="middle">256 numbers per square</text>
+      <!-- sample -->
+      <line class="e" x1="716" y1="104" x2="796" y2="104" marker-end="url(#m6)"/><text class="a" x="756" y="96" text-anchor="middle">× 3 views</text>
+      <rect class="bp" x="800" y="44" width="290" height="120" rx="6"/>
+      <text class="t" x="814" y="70">One training sample</text>
+      <text class="s" x="814" y="94">3 feature grids: 3 × 256 × 22 × 40</text>
+      <text class="s" x="814" y="113">3 belt shifts: +105.2, 0, −97.4 px</text>
+      <text class="s" x="814" y="132">1 answer grid: 22 × 40 of 0/1</text>
+      <text class="s" x="814" y="151">(1 photo has the glare)</text>
+      <!-- label path -->
+      <path class="e" d="M116 186V244H286" marker-end="url(#m6)"/>
+      <text class="a" x="124" y="236">LLM box → square = 1 if</text>
+      <text class="a" x="124" y="262">≥ 25% inside the box</text>
+      <text class="t" x="290" y="196">Answer grid (label)</text>
+      <rect class="cellbg" x="290" y="206" width="160" height="88"/>
+      <rect class="rock" x="386" y="222" width="64" height="36"/>
+      <rect x="290" y="206" width="160" height="88" fill="url(#sq)"/>
+      <text class="a" x="460" y="236">rows 4–12, columns 24–39</text>
+      <text class="a" x="460" y="252">144 of 880 squares = 1</text>
+      <path class="e" d="M640 252H945V168" marker-end="url(#m6)"/>
+      <text class="a" x="800" y="244" text-anchor="middle">what the model must reproduce</text>
+    </svg>
+    </div>
+    <figcaption>The model never sees pixels during training. Step 05 turns every photo into the 256 × 22 × 40 feature grid once and saves it. A square is about 32 × 33 px of the camera frame, so the output is a coarse map, not an outline.</figcaption>
+  </figure>
+  <div class="tbl">
+    <table>
+      <thead><tr><th>stage (batch of 8)</th><th>size</th><th>what changes</th></tr></thead>
+      <tbody>
+        <tr><td>input</td><td class="mono">8 × 3 × 256 × 22 × 40</td><td>8 samples, 3 views each, 256 numbers per square</td></tr>
+        <tr><td>bottleneck</td><td class="mono">8 × 3 × 96 × 22 × 40</td><td>256 numbers squeezed to 96 per square</td></tr>
+        <tr><td>alignment</td><td class="mono">8 × 3 × 96 × 22 × 40</td><td>views slid by +3.3, 0, −3.0 squares (shift ÷ 32 px), so the stick covers the same squares</td></tr>
+        <tr><td>frame attention</td><td class="mono">8 × 22 × 40 × 96</td><td>each square of view t blends its 27 tokens (3 × 3 window × 3 views) into one</td></tr>
+        <tr><td>belt context</td><td class="mono">8 × 880 × 96</td><td>the 880 squares are 880 tokens that attend to each other</td></tr>
+        <tr><td>head</td><td class="mono">8 × 22 × 40</td><td>one score per square → sigmoid → probability → above 0.5 = impurity</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>The output has exactly the shape of the answer grid. Training compares the two square by square (the loss), and the test measures their overlap (IoU). Data: 2,716 training samples (980 with an object, 1,736 ore only, 2,016 with glare), 470 validation, 508 test, built from 8,068 distinct photo files.</p>
+</section>
+
+<section>
+  <h2>Inside one per-frame model</h2>
+  <p>Input: the cached features of the views plus how far the belt moved between them. Output: one probability per square of the middle photo <i>t</i>, a 22 × 40 grid where each square is 32 × 32 px of the original frame.</p>
+  <figure>
+    <div class="scroll">
+    <svg viewBox="0 0 1110 225" role="img" aria-label="BeltPulse model: three views of ResNet features go through a 1x1 bottleneck, are shifted by the belt motion, combined by cross-frame attention, then all squares attend to each other, and a head gives one score per square.">
+      <defs><marker id="m2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="currentColor"/></marker></defs>
+      <text class="a" x="80" y="60" text-anchor="middle">ResNet features</text>
+      <rect class="bz" x="20" y="72" width="120" height="30" rx="5"/><text class="s" x="80" y="92" text-anchor="middle">view t−k</text>
+      <rect class="bz" x="20" y="110" width="120" height="30" rx="5"/><text class="s" x="80" y="130" text-anchor="middle">view t</text>
+      <rect class="bz" x="20" y="148" width="120" height="30" rx="5"/><text class="s" x="80" y="168" text-anchor="middle">view t+k</text>
+      <text class="a" x="80" y="198" text-anchor="middle">256×22×40 each</text>
+      <line class="e" x1="140" y1="87" x2="186" y2="118" marker-end="url(#m2)"/>
+      <line class="e" x1="140" y1="125" x2="186" y2="125" marker-end="url(#m2)"/>
+      <line class="e" x1="140" y1="163" x2="186" y2="132" marker-end="url(#m2)"/>
+      <rect class="bl" x="190" y="80" width="140" height="90" rx="6"/>
+      <text class="t" x="202" y="108">Bottleneck</text><text class="s" x="202" y="130">1×1 convolutions</text><text class="s" x="202" y="148">256 → 96 numbers</text>
+      <rect class="bf" x="380" y="80" width="140" height="90" rx="6"/>
+      <text class="t" x="392" y="108">Kinematic align</text><text class="s" x="392" y="130">shift view by belt</text><text class="s" x="392" y="148">motion, no learning</text>
+      <text class="a" x="450" y="32" text-anchor="middle">belt shift per view (step 02)</text>
+      <line class="e" x1="450" y1="40" x2="450" y2="76" marker-end="url(#m2)"/>
+      <rect class="bl" x="570" y="80" width="140" height="90" rx="6"/>
+      <text class="t" x="582" y="108">Frame attention</text><text class="s" x="582" y="130">27 tokens / square</text><text class="s" x="582" y="148">weights the views</text>
+      <rect class="bl" x="760" y="80" width="140" height="90" rx="6"/>
+      <text class="t" x="772" y="108">Belt context</text><text class="s" x="772" y="130">880 squares look</text><text class="s" x="772" y="148">at each other</text>
+      <rect class="bl" x="950" y="80" width="140" height="90" rx="6"/>
+      <text class="t" x="962" y="108">Head</text><text class="s" x="962" y="130">score per square</text><text class="s" x="962" y="148">→ 22 × 40 grid</text>
+      <line class="e" x1="330" y1="125" x2="376" y2="125" marker-end="url(#m2)"/><text class="a" x="355" y="117" text-anchor="middle">3×96</text>
+      <line class="e" x1="520" y1="125" x2="566" y2="125" marker-end="url(#m2)"/><text class="a" x="545" y="117" text-anchor="middle">lined</text>
+      <line class="e" x1="710" y1="125" x2="756" y2="125" marker-end="url(#m2)"/><text class="a" x="735" y="117" text-anchor="middle">96/sq</text>
+      <line class="e" x1="900" y1="125" x2="946" y2="125" marker-end="url(#m2)"/><text class="a" x="925" y="117" text-anchor="middle">96/sq</text>
+      <path class="e" d="M570 184V192H900V184"/>
+      <text class="a" x="735" y="212" text-anchor="middle">the two transformer blocks</text>
+    </svg>
+    </div>
+    <figcaption>About 270,000 trained numbers in total, against 11 million in the frozen ResNet. Runs at about 7 ms per frame on the laptop RTX 3050. Alignment is plain arithmetic: after it, a rock riding on the belt sits on the same square in every view.</figcaption>
+  </figure>
+</section>
+
+<section>
+  <h2>Alignment and attention, for one square</h2>
+  <p>The belt carries the rock left, so it sits in a different place in each view. Sliding each view by its measured belt shift puts the rock on the same square. Attention then compares that square of view <i>t</i> with a small window around it in every view.</p>
+  <figure>
+    <div class="scroll">
+    <svg viewBox="0 0 1110 275" role="img" aria-label="Before alignment the rock sits at columns 6, 4 and 2 in the three views; after sliding by the belt shift it sits at column 4 in all of them. A 3 by 3 window around that square in each view gives 27 patches; the glared view gets a low weight.">
+      <defs>
+        <marker id="m3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="currentColor"/></marker>
+        <g id="g9"><rect class="cellbg" width="144" height="48"/><path class="gl" d="M16 0V48M32 0V48M48 0V48M64 0V48M80 0V48M96 0V48M112 0V48M128 0V48M0 16H144M0 32H144"/></g>
+      </defs>
+      <text class="h" x="70" y="30">Before: one rock, three places</text>
+      <text class="s" x="60" y="80" text-anchor="end">t−k</text><use href="#g9" x="70" y="50"/><rect class="rock" x="166" y="66" width="16" height="16"/>
+      <text class="s" x="60" y="145" text-anchor="end">t</text><use href="#g9" x="70" y="115"/><rect class="rockg" x="134" y="131" width="16" height="16"/>
+      <text class="a" x="222" y="145">glare</text>
+      <text class="s" x="60" y="210" text-anchor="end">t+k</text><use href="#g9" x="70" y="180"/><rect class="rock" x="102" y="196" width="16" height="16"/>
+      <line class="e" x1="214" y1="252" x2="74" y2="252" marker-end="url(#m3)"/><text class="a" x="144" y="268" text-anchor="middle">belt moves this way</text>
+      <text class="a" x="300" y="122" text-anchor="middle">slide each view</text>
+      <text class="a" x="300" y="136" text-anchor="middle">+2, 0, −2 squares</text>
+      <line class="e" x1="262" y1="146" x2="362" y2="146" marker-end="url(#m3)"/>
+      <text class="h" x="400" y="30">After: same square in every view</text>
+      <text class="s" x="390" y="80" text-anchor="end">t−k</text><use href="#g9" x="400" y="50"/><rect class="rock" x="464" y="66" width="16" height="16"/><rect class="win" x="448" y="50" width="48" height="48"/>
+      <text class="s" x="390" y="145" text-anchor="end">t</text><use href="#g9" x="400" y="115"/><rect class="rockg" x="464" y="131" width="16" height="16"/><rect class="win" x="448" y="115" width="48" height="48"/>
+      <text class="s" x="390" y="210" text-anchor="end">t+k</text><use href="#g9" x="400" y="180"/><rect class="rock" x="464" y="196" width="16" height="16"/><rect class="win" x="448" y="180" width="48" height="48"/>
+      <line class="e" x1="548" y1="74" x2="696" y2="127" marker-end="url(#m3)"/><text class="acc" x="622" y="90" text-anchor="middle">0.45</text>
+      <line class="e" x1="548" y1="139" x2="696" y2="139" marker-end="url(#m3)"/><text class="acc" x="622" y="131" text-anchor="middle">0.10 glared</text>
+      <line class="e" x1="548" y1="204" x2="696" y2="151" marker-end="url(#m3)"/><text class="acc" x="622" y="198" text-anchor="middle">0.45</text>
+      <rect class="bl" x="700" y="100" width="190" height="78" rx="6"/>
+      <text class="t" x="712" y="126">One square of view t</text><text class="s" x="712" y="146">compares itself with</text><text class="s" x="712" y="164">27 patches (3 × 3 × 3)</text>
+      <line class="e" x1="890" y1="139" x2="936" y2="139" marker-end="url(#m3)"/>
+      <rect class="bl" x="940" y="100" width="150" height="78" rx="6"/>
+      <text class="t" x="952" y="126">Blend</text><text class="s" x="952" y="146">weight × patch</text><text class="s" x="952" y="164">→ one vector</text>
+      <text class="a" x="472" y="250" text-anchor="middle">3×3 window (8-view variant: 7×7)</text>
+    </svg>
+    </div>
+    <figcaption>The weights shown are the behaviour we hope for, not a measured result. In the smoke run attention was still close to uniform (glared views 0.35 vs clean 0.33). A rolling rock leaves the physics-predicted square, which is why the 8-view variant widens the window to 7 × 7 so attention can search for it.</figcaption>
+  </figure>
+</section>
+
+<section>
+  <h2>How the trust is computed</h2>
+  <p>The saved model does not store "trust view t−k". It stores three learned matrices that turn any patch into a query, a key and a value. The trust weights are computed again for every square of every photo, from whatever the views contain there.</p>
+  <figure>
+    <div class="scroll">
+    <svg viewBox="0 0 1110 325" role="img" aria-label="For one square, each patch passes through the learned matrix W_k to become a key, and the square of view t passes through W_q to become a query. The query is compared with each key to give scores 4.0, 0.0 and 3.6, softmax turns them into weights 0.59, 0.01 and 0.40, and the values are blended with those weights before going on to the belt context and the head.">
+      <defs><marker id="m7" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="currentColor"/></marker></defs>
+      <text class="h" x="20" y="28">Teal = trained once, saved in beltpulse.pt. Everything else is computed fresh for this square.</text>
+      <!-- patches -->
+      <rect class="bz" x="20" y="56" width="130" height="40" rx="5"/><rect class="rock" x="30" y="68" width="16" height="16"/><text class="s" x="56" y="81">t−k · clean</text>
+      <rect class="bz" x="20" y="116" width="130" height="40" rx="5"/><rect class="rockg" x="30" y="128" width="16" height="16"/><text class="s" x="56" y="141">t · glared</text>
+      <rect class="bz" x="20" y="176" width="130" height="40" rx="5"/><rect class="rock" x="30" y="188" width="16" height="16"/><text class="s" x="56" y="201">t+k · clean</text>
+      <text class="a" x="85" y="46" text-anchor="middle">patches (96 numbers)</text>
+      <rect class="bz" x="20" y="256" width="130" height="40" rx="5"/><text class="s" x="85" y="281" text-anchor="middle">this square, view t</text>
+      <!-- W_k and W_q -->
+      <line class="e" x1="150" y1="76" x2="186" y2="76" marker-end="url(#m7)"/>
+      <line class="e" x1="150" y1="136" x2="186" y2="136" marker-end="url(#m7)"/>
+      <line class="e" x1="150" y1="196" x2="186" y2="196" marker-end="url(#m7)"/>
+      <rect class="bl" x="190" y="56" width="70" height="160" rx="6"/><text class="t" x="225" y="132" text-anchor="middle">W_k</text><text class="s" x="225" y="150" text-anchor="middle">96×96</text>
+      <line class="e" x1="150" y1="276" x2="186" y2="276" marker-end="url(#m7)"/>
+      <rect class="bl" x="190" y="256" width="70" height="40" rx="6"/><text class="t" x="225" y="281" text-anchor="middle">W_q</text>
+      <!-- keys and query -->
+      <line class="e" x1="260" y1="76" x2="296" y2="76" marker-end="url(#m7)"/>
+      <line class="e" x1="260" y1="136" x2="296" y2="136" marker-end="url(#m7)"/>
+      <line class="e" x1="260" y1="196" x2="296" y2="196" marker-end="url(#m7)"/>
+      <rect class="bp" x="300" y="56" width="90" height="40" rx="5"/><text class="s" x="345" y="81" text-anchor="middle">key k₁</text>
+      <rect class="bp" x="300" y="116" width="90" height="40" rx="5"/><text class="s" x="345" y="141" text-anchor="middle">key k₂</text>
+      <rect class="bp" x="300" y="176" width="90" height="40" rx="5"/><text class="s" x="345" y="201" text-anchor="middle">key k₃</text>
+      <text class="a" x="345" y="46" text-anchor="middle">"what kind of patch"</text>
+      <line class="e" x1="260" y1="276" x2="296" y2="276" marker-end="url(#m7)"/>
+      <rect class="bp" x="300" y="256" width="90" height="40" rx="5"/><text class="s" x="345" y="281" text-anchor="middle">query q</text>
+      <text class="a" x="345" y="314" text-anchor="middle">"what I look for"</text>
+      <!-- scores -->
+      <line class="e" x1="390" y1="76" x2="426" y2="76" marker-end="url(#m7)"/>
+      <line class="e" x1="390" y1="136" x2="426" y2="136" marker-end="url(#m7)"/>
+      <line class="e" x1="390" y1="196" x2="426" y2="196" marker-end="url(#m7)"/>
+      <rect class="bp" x="430" y="56" width="110" height="40" rx="5"/><text class="s" x="485" y="81" text-anchor="middle">q · k₁ = 4.0</text>
+      <rect class="bp" x="430" y="116" width="110" height="40" rx="5"/><text class="s" x="485" y="141" text-anchor="middle">q · k₂ = 0.0</text>
+      <rect class="bp" x="430" y="176" width="110" height="40" rx="5"/><text class="s" x="485" y="201" text-anchor="middle">q · k₃ = 3.6</text>
+      <text class="a" x="485" y="46" text-anchor="middle">match score</text>
+      <path class="e" d="M390 276H485V220" marker-end="url(#m7)"/>
+      <text class="a" x="496" y="262">compared with every key</text>
+      <!-- softmax -->
+      <line class="e" x1="540" y1="76" x2="576" y2="120" marker-end="url(#m7)"/>
+      <line class="e" x1="540" y1="136" x2="576" y2="136" marker-end="url(#m7)"/>
+      <line class="e" x1="540" y1="196" x2="576" y2="152" marker-end="url(#m7)"/>
+      <rect class="bf" x="580" y="96" width="100" height="80" rx="6"/><text class="t" x="630" y="130" text-anchor="middle">softmax</text><text class="s" x="630" y="150" text-anchor="middle">weights sum to 1</text>
+      <!-- weight bars -->
+      <line class="e" x1="680" y1="120" x2="716" y2="76" marker-end="url(#m7)"/>
+      <line class="e" x1="680" y1="136" x2="716" y2="136" marker-end="url(#m7)"/>
+      <line class="e" x1="680" y1="152" x2="716" y2="196" marker-end="url(#m7)"/>
+      <text class="a" x="720" y="46">trust weight</text>
+      <rect class="bar" x="720" y="64" width="88" height="24" rx="3"/><text class="acc" x="816" y="81">0.59</text>
+      <rect class="bar" x="720" y="124" width="2" height="24"/><text class="acc" x="730" y="141">0.01</text>
+      <rect class="bar" x="720" y="184" width="60" height="24" rx="3"/><text class="acc" x="788" y="201">0.40</text>
+      <!-- blend -->
+      <line class="e" x1="860" y1="76" x2="926" y2="118" marker-end="url(#m7)"/>
+      <line class="e" x1="860" y1="136" x2="926" y2="136" marker-end="url(#m7)"/>
+      <line class="e" x1="860" y1="196" x2="926" y2="154" marker-end="url(#m7)"/>
+      <rect class="bp" x="930" y="96" width="160" height="80" rx="6"/>
+      <text class="t" x="942" y="122">Blend</text><text class="s" x="942" y="142">Σ weight × value</text><text class="s" x="942" y="160">(value = W_v × patch)</text>
+      <line class="e" x1="1010" y1="176" x2="1010" y2="252" marker-end="url(#m7)"/>
+      <rect class="bl" x="930" y="256" width="160" height="50" rx="6"/>
+      <text class="s" x="942" y="277">belt context → head</text><text class="t" x="942" y="296">impurity: 0.93</text>
+    </svg>
+    </div>
+    <figcaption>Illustrative numbers for the three centre patches. The real model scores all 27 patches (3 × 3 window × 3 views) and runs 4 such attentions side by side ("heads"), each with its own matrices. On a clean square the same matrices give the three views similar scores, so the weights come out near 1/3. <code>avg</code> uses 1/3 everywhere, for every input.</figcaption>
+  </figure>
+  <div class="tbl">
+    <table>
+      <thead><tr><th></th><th>trained weights</th><th>attention (trust) weights</th></tr></thead>
+      <tbody>
+        <tr><td>what</td><td>W_q, W_k, W_v: three 96 × 96 matrices (plus view and window-position embeddings)</td><td>27 numbers per square that add up to 1</td></tr>
+        <tr><td>when made</td><td>during training, then fixed</td><td>at prediction time, for every square of every photo</td></tr>
+        <tr><td>meaning</td><td>a rule for judging any patch</td><td>how much to use each patch here, right now</td></tr>
+        <tr><td>saved</td><td>yes, in <code>data/models/full/beltpulse.pt</code></td><td>no; steps 07 and 08 only read them out to plot them</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <ol class="run">
+    <li><b>Training never says "glare is bad".</b> The model predicts with its current matrices.</li>
+    <li>If the glared patch got a large weight, the blend looks washed out, the stick is missed, and the loss is high.</li>
+    <li>The gradient says a lower score for glare-like keys would have lowered the loss, so W_q and W_k shift a little that way.</li>
+    <li>After 2,716 samples × 30 epochs, glare-like patches get low scores, but only if that actually helped. The attention check in step 07 shows whether it happened: glared views clearly below 1/3 means it learned; about 1/3 means it is averaging.</li>
+  </ol>
+</section>
+
+<section>
+  <h2>What the baselines change</h2>
+  <p>All six trained models share the same network and differ only in the fusion slot. The voting baselines are wired the other way round: each view decides alone first, and the answers are combined afterwards.</p>
+  <figure>
+    <div class="scroll">
+    <svg viewBox="0 0 1110 245" role="img" aria-label="Left: views are combined in a fusion slot before one decision is made, used by the six trained models. Right: the single model decides on each view separately, answers are aligned and then combined by a vote.">
+      <defs><marker id="m4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="currentColor"/></marker></defs>
+      <text class="h" x="20" y="26">Combine, then decide (6 trained models)</text>
+      <text class="h" x="585" y="26">Decide, then combine (votes, no training)</text>
+      <line class="dash" x1="560" y1="12" x2="560" y2="236"/>
+      <rect class="bz" x="20" y="58" width="96" height="30" rx="5"/><text class="s" x="68" y="78" text-anchor="middle">view t−k</text>
+      <rect class="bz" x="20" y="103" width="96" height="30" rx="5"/><text class="s" x="68" y="123" text-anchor="middle">view t</text>
+      <rect class="bz" x="20" y="148" width="96" height="30" rx="5"/><text class="s" x="68" y="168" text-anchor="middle">view t+k</text>
+      <line class="e" x1="116" y1="73" x2="161" y2="106" marker-end="url(#m4)"/>
+      <line class="e" x1="116" y1="118" x2="161" y2="118" marker-end="url(#m4)"/>
+      <line class="e" x1="116" y1="163" x2="161" y2="130" marker-end="url(#m4)"/>
+      <rect class="slot" x="165" y="50" width="165" height="140" rx="6"/>
+      <text class="t" x="177" y="76">Fusion slot</text>
+      <text class="s" x="177" y="100">single: view t only</text><text class="s" x="177" y="118">avg · median</text><text class="s" x="177" y="136">glareskip</text><text class="s" x="177" y="154">noalign · beltpulse</text>
+      <line class="e" x1="330" y1="120" x2="371" y2="120" marker-end="url(#m4)"/>
+      <rect class="bl" x="375" y="90" width="120" height="60" rx="6"/>
+      <text class="t" x="387" y="114">Belt context</text><text class="s" x="387" y="134">+ head</text>
+      <line class="e" x1="495" y1="120" x2="545" y2="120" marker-end="url(#m4)"/><text class="a" x="520" y="112" text-anchor="middle">grid</text>
+      <rect class="bz" x="585" y="58" width="96" height="30" rx="5"/><text class="s" x="633" y="78" text-anchor="middle">view t−k</text>
+      <rect class="bz" x="585" y="103" width="96" height="30" rx="5"/><text class="s" x="633" y="123" text-anchor="middle">view t</text>
+      <rect class="bz" x="585" y="148" width="96" height="30" rx="5"/><text class="s" x="633" y="168" text-anchor="middle">view t+k</text>
+      <line class="e" x1="681" y1="73" x2="712" y2="73" marker-end="url(#m4)"/>
+      <line class="e" x1="681" y1="118" x2="712" y2="118" marker-end="url(#m4)"/>
+      <line class="e" x1="681" y1="163" x2="712" y2="163" marker-end="url(#m4)"/>
+      <rect class="bl" x="716" y="58" width="80" height="30" rx="5"/><text class="s" x="756" y="78" text-anchor="middle">single</text>
+      <rect class="bl" x="716" y="103" width="80" height="30" rx="5"/><text class="s" x="756" y="123" text-anchor="middle">single</text>
+      <rect class="bl" x="716" y="148" width="80" height="30" rx="5"/><text class="s" x="756" y="168" text-anchor="middle">single</text>
+      <line class="e" x1="796" y1="73" x2="832" y2="73" marker-end="url(#m4)"/><text class="a" x="814" y="67" text-anchor="middle">p₁</text>
+      <line class="e" x1="796" y1="118" x2="832" y2="118" marker-end="url(#m4)"/><text class="a" x="814" y="112" text-anchor="middle">p₂</text>
+      <line class="e" x1="796" y1="163" x2="832" y2="163" marker-end="url(#m4)"/><text class="a" x="814" y="157" text-anchor="middle">p₃</text>
+      <rect class="bf" x="836" y="50" width="100" height="140" rx="6"/>
+      <text class="t" x="848" y="76">Align</text><text class="s" x="848" y="100">answers to</text><text class="s" x="848" y="118">view t</text>
+      <line class="e" x1="936" y1="120" x2="962" y2="120" marker-end="url(#m4)"/>
+      <rect class="bf" x="966" y="50" width="124" height="140" rx="6"/>
+      <text class="t" x="978" y="76">Vote</text><text class="s" x="978" y="100">OR</text><text class="s" x="978" y="118">2-of-N (8 views)</text><text class="s" x="978" y="136">majority</text><text class="s" x="978" y="154">mean</text>
+      <text class="s" x="20" y="222">Views are mixed before any yes/no, so weak evidence can add up.</text>
+      <text class="s" x="585" y="222">Each view decides alone, so the vote cannot see why it said yes.</text>
+    </svg>
+    </div>
+    <figcaption>Right side: the same trained <code>single</code> model runs once per view. A glare blob that looks like white plastic gives the same "yes" as a real object, and no vote rule can tell the two apart.</figcaption>
+  </figure>
+  <div class="tbl">
+    <table>
+      <thead><tr><th>model</th><th>what fills the fusion slot</th><th>learns which view to trust?</th><th>question it answers</th></tr></thead>
+      <tbody>
+        <tr><td>single</td><td>view <i>t</i> only</td><td>n/a</td><td>the classic one-photo detector</td></tr>
+        <tr><td>avg</td><td>aligned views, averaged (each view 1/3)</td><td>no</td><td>do several views help at all?</td></tr>
+        <tr><td>median</td><td>aligned views, median per square</td><td>no</td><td>does a fixed robust rule remove glare just as well?</td></tr>
+        <tr><td>glareskip</td><td>average of the views not washed out here (≥ 50% near-white pixels); if all are white, keep all</td><td>no, brightness rule</td><td>is attention more than "skip the white view"?</td></tr>
+        <tr><td>noalign</td><td>attention over views without the belt shift</td><td>yes, on the wrong squares</td><td>does the kinematic alignment matter?</td></tr>
+        <tr><td>beltpulse</td><td>attention over aligned views</td><td>yes</td><td>our method</td></tr>
+        <tr><td>single + votes</td><td>no slot: each view decided alone, then OR / 2-of-N / majority / mean</td><td>no</td><td>is combining before deciding better?</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <h2>One decision per object</h2>
+  <p>A sorter needs one decision per object, but an object is visible in 30 to 600 frames. Step 10 links per-frame detections into tracks using belt physics. A sequence transformer then reads each track and makes one call.</p>
+  <figure>
+    <div class="scroll">
+    <svg viewBox="0 0 1120 195" role="img" aria-label="Per object: the per-frame model finds impurity squares, these become blobs and boxes, a physics tracker links boxes across frames into a track, a sequence transformer reads the track, and the decision is ore or a typed, counted impurity.">
+      <defs><marker id="m5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="currentColor"/></marker></defs>
+      <rect class="bl" x="10" y="50" width="148" height="90" rx="6"/><text class="t" x="22" y="78">Per-frame model</text><text class="s" x="22" y="100">impurity squares</text><text class="s" x="22" y="118">in every frame</text>
+      <rect class="bf" x="200" y="50" width="148" height="90" rx="6"/><text class="t" x="212" y="78">Blobs → boxes</text><text class="s" x="212" y="100">touching squares</text><text class="s" x="212" y="118">= one blob</text>
+      <rect class="bf" x="390" y="50" width="148" height="90" rx="6"/><text class="t" x="402" y="78">Physics tracker</text><text class="s" x="402" y="100">predict with belt</text><text class="s" x="402" y="118">motion, link boxes</text>
+      <rect class="bp" x="580" y="50" width="148" height="90" rx="6"/><text class="t" x="592" y="78">Track</text><text class="s" x="592" y="100">30–600 frames</text><text class="s" x="592" y="118">of one object</text>
+      <rect class="bl" x="770" y="50" width="148" height="90" rx="6"/><text class="t" x="782" y="78">Seq. transformer</text><text class="s" x="782" y="100">[CLS] + ≤ 64 frames</text><text class="s" x="782" y="118">2 layers</text>
+      <rect class="bp" x="960" y="50" width="148" height="90" rx="6"/><text class="t" x="972" y="78">Decision</text><text class="s" x="972" y="100">ore → not counted</text><text class="s" x="972" y="118">else type + count</text>
+      <line class="e" x1="158" y1="95" x2="196" y2="95" marker-end="url(#m5)"/><text class="a" x="179" y="87" text-anchor="middle">grid</text>
+      <line class="e" x1="348" y1="95" x2="386" y2="95" marker-end="url(#m5)"/><text class="a" x="369" y="87" text-anchor="middle">boxes</text>
+      <line class="e" x1="538" y1="95" x2="576" y2="95" marker-end="url(#m5)"/><text class="a" x="559" y="87" text-anchor="middle">IDs</text>
+      <line class="e" x1="728" y1="95" x2="766" y2="95" marker-end="url(#m5)"/><text class="a" x="749" y="87" text-anchor="middle">tokens</text>
+      <line class="e" x1="918" y1="95" x2="956" y2="95" marker-end="url(#m5)"/><text class="a" x="939" y="87" text-anchor="middle">class</text>
+      <text class="a" x="464" y="164" text-anchor="middle">IoU &gt; 0.1 or</text><text class="a" x="464" y="180" text-anchor="middle">centre ≤ 64 px</text>
+      <text class="a" x="654" y="164" text-anchor="middle">token = ResNet in box</text><text class="a" x="654" y="180" text-anchor="middle">mean + max (512)</text>
+      <text class="a" x="844" y="164" text-anchor="middle">vs MeanPool and</text><text class="a" x="844" y="180" text-anchor="middle">per-frame + votes</text>
+      <text class="a" x="1034" y="164" text-anchor="middle">only tracks with</text><text class="a" x="1034" y="180" text-anchor="middle">≥ 3 detections</text>
+    </svg>
+    </div>
+    <figcaption>The tracker does the counting: it turned 119 raw detections into 6 tracks for the 3 sticks in <code>7_wood_3</code>. The transformer decides which tracks count and what type they are. A lamp reflection does not move with the belt, so it rarely forms a long track. Classes: ore, wood, plastic, canga, jaspilito, tool.</figcaption>
+  </figure>
+</section>
+
+<section>
+  <h2>Two variants</h2>
+  <div class="tbl">
+    <table>
+      <thead><tr><th>variant</th><th>views per example</th><th>attention window</th><th>glare in samples</th><th>train / val / test</th><th>why</th></tr></thead>
+      <tbody>
+        <tr><td>base</td><td>3: t−k, t, t+k</td><td>3 × 3 (27 tokens)</td><td>at most one view</td><td>2,716 / 470 / 508</td><td>main comparison, fast</td></tr>
+        <tr><td>T8w7</td><td>8: t−3k … t+4k</td><td>7 × 7 (392 tokens)</td><td>each view 30%; half of test always glared on <i>t</i></td><td>2,644 / 458 / 490</td><td>where averaging should break: many bad views, rolling objects</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Test videos, never seen in training: <code>7_wood_3</code>, <code>canga3</code>, <code>jaspilito_4</code> (real glare, motion blur, rolling), <code>things_3</code>, <code>iron_ore_4</code> (ore only, for false alarms).</p>
+</section>
+
+<section>
+  <h2>What the full run tests</h2>
+  <div class="tbl">
+    <table>
+      <thead><tr><th>claim</th><th>comparison</th><th>status</th></tr></thead>
+      <tbody>
+        <tr><td>1 · views help</td><td>single vs avg / median / beltpulse, especially under glare</td><td><span class="pill ok">ready</span></td></tr>
+        <tr><td>2 · alignment</td><td>noalign vs avg and beltpulse</td><td><span class="pill ok">ready</span></td></tr>
+        <tr><td>3 · attention</td><td>beltpulse vs avg, median, glareskip and votes</td><td><span class="pill ok">ready</span></td></tr>
+        <tr><td>3b · many views</td><td>T8w7 beltpulse vs T8w7 avg</td><td><span class="pill ok">ready</span></td></tr>
+        <tr><td>4 · rolling</td><td>scores on rolling intervals only (avg ≤ single ≤ beltpulse?)</td><td><span class="pill no">metric not built</span></td></tr>
+        <tr><td>5 · per object</td><td>SeqTransformer vs MeanPool vs per-frame votes</td><td><span class="pill ok">ready</span></td></tr>
+        <tr><td>6 · counting</td><td>count error per video for each track filter</td><td><span class="pill no">not built</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Each model is trained once with a fixed random seed. The smoke runs varied by about ±0.05 between runs, so small gaps between models are not conclusive.</p>
+</section>
+
+<section>
+  <h2>Run order</h2>
+  <ol class="run">
+    <li><b>3 views, about 1 hour.</b> Features for all samples (05), then the 6 models (06), evaluation with votes (07), several objects per photo (07b), attention pictures (08).</li>
+    <li><b>8 views, about 4 hours.</b> The same steps with <code>--variant T8w7</code>.</li>
+    <li><b>Per object.</b> Step 10 with <code>--detector full</code>, using the full 3-view <code>single</code> model.</li>
+  </ol>
+<pre>.venv\Scripts\python src\05_extract_features.py
+.venv\Scripts\python src\06_train.py
+.venv\Scripts\python src\07_evaluate.py
+.venv\Scripts\python src\07b_multi_object.py
+.venv\Scripts\python src\08_explain_attention.py</pre>
+</section>
+
+</div>

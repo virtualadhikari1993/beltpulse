@@ -245,5 +245,18 @@ And it checks whether the transformer really does the matching we claim (E10).
 
 ---
 
+## E16. Does the spatial transformer (belt context) help? Ablation
+**What:** train `avg` (or `beltpulse`) with the spatial transformer (Part B) replaced by (a) nothing (each square decided alone) and (b) a few 3x3 conv layers of similar size.
+
+**Why:** all six models contain the same spatial transformer, so the main comparison only tests the *cross-frame* attention (Part A).
+"The transformer is not needed" can therefore only be said about fusing the views. Whether a transformer helps by letting all 880 squares
+look at each other ("is this patch unusual compared to the rest of the belt?", long sticks across many squares) is untested without this ablation.
+
+**How:** a `spatial` option in `src/model.py`: `transformer` (now) / `none` / `conv`. Train on the 3-view variant only, ~17 min per model.
+
+**Effort:** ~1 hour code + ~35 min training. **Status:** idea.
+
+---
+
 ## E4. Visualise which patches the transformer listens to — **done**
 Implemented as step 08 (`src/08_explain_attention.py`, `docs/08_attention_explained.md`).

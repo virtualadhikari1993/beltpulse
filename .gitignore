@@ -11,3 +11,6 @@ data/raw/
 data/features/
 data/models/
 *.pt
+
+# Run logs
+outputs/logs/

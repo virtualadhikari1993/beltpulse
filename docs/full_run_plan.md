@@ -67,3 +67,31 @@ ResNet-18 is frozen (not trained). Everything else is small (~270k parameters fo
 # per object (needs the full 3-view `single` model)
 .venv\Scripts\python src\10_per_object.py --detector full
 ```
+
+## Running it unattended (laptop locked) and watching progress
+`scripts/run_full.py` runs the steps in order, writes everything to `outputs/logs/full_<variant>.log`,
+keeps the current step in `outputs/logs/full_<variant>_status.txt`, and asks Windows not to sleep while it runs.
+
+1. Plug in the charger. Leave the lid **open**, or set "When I close the lid" (plugged in) to *Do nothing*:
+   `powercfg /setacvalueindex SCHEME_CURRENT SUB_BUTTONS LIDACTION 0; powercfg /setactive SCHEME_CURRENT`
+   (undo afterwards with `LIDACTION 1`).
+2. Start it in a normal PowerShell window (not the VS Code terminal, which dies with VS Code):
+   `cd D:\foml_project; .venv\Scripts\python scripts\run_full.py`
+3. Lock the laptop (Win + L). Locking does not stop the run.
+4. Watch it from a second PowerShell window: `Get-Content D:\foml_project\outputs\logs\full_base.log -Wait -Tail 20`
+   (one line per epoch with time left), `nvidia-smi -l 10` (GPU busy?), or `type D:\foml_project\outputs\logs\full_base_status.txt`.
+5. If a step fails, the status file names it: rerun with `--from <step>`.
+
+## Reading the log
+**Step 05:** `8068 photos needed, 0 not cached yet` = every photo's ResNet features already exist, so `ResNet: 0it` means "nothing to compute", not an error.
+
+**Step 06:** one line per epoch:
+`[single 1/6] epoch 6/30  train loss 0.168  val loss 0.345  val IoU 0.713 (best 0.713)  3.3 min, ~13 min left for this model`
+- `single 1/6`: which of the 6 models is training.
+- `train loss`: error on the training examples. Should fall almost every epoch.
+- `val loss` / `val IoU`: on the validation videos, which the model never trains on. These measure generalisation.
+- `best`: the highest val IoU so far. Only that epoch's weights are saved, so later worse epochs do no harm.
+- Train loss falling while val loss rises = overfitting (memorising the training videos). Expected here; the best-epoch saving handles it.
+- Bad signs: `nan` loss, val IoU stuck near 0, or train loss not falling.
+
+Measured full-run speed (3 views): ~0.55 min per epoch, ~17 min per model, **~1 h 45 min for all 6** (longer than the first estimate).

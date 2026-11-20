@@ -44,12 +44,14 @@ from model import build_model, MODES, kinematic_align
 ap = argparse.ArgumentParser()
 ap.add_argument("--limit", type=int, default=0)
 ap.add_argument("--variant", default="base", choices=list(VARIANTS))
+ap.add_argument("--seed", type=int, default=0, help="evaluate the models trained with 06 --seed N (folder <run>_sN)")
 args = ap.parse_args()
-tag = run_tag(args.limit, args.variant)
+data_tag = run_tag(args.limit, args.variant)
+tag = data_tag + (f"_s{args.seed}" if args.seed else "")
 cfg = VARIANTS[args.variant]
 dev = "cuda" if torch.cuda.is_available() else "cpu"
 
-subset = json.load(open(os.path.join(ROOT, "data", "samples", f"subset_{tag}.json")))
+subset = json.load(open(os.path.join(ROOT, "data", "samples", f"subset_{data_tag}.json")))
 test = [s for s in subset if s["split"] == "test"]
 loader = DataLoader(FeatureSamples(test, with_white=True), batch_size=4)
 OUT = os.path.join(ROOT, "outputs", "07_eval", tag)
@@ -221,7 +223,7 @@ def heat(img, prob, color=(0, 0, 255)):
 
 
 order = [i for i in range(len(test)) if glared[i] and truth[i].any()] + [i for i in range(len(test)) if not glared[i] and truth[i].any()]
-for n, i in enumerate(order[:6]):
+for n, i in enumerate(order[:6] if {"single", "beltpulse"} <= set(preds) else []):
     s = test[i]
     ims = []
     for slot in sorted({0, t_index(s), len(s["frames"]) - 1}):

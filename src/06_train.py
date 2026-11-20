@@ -38,13 +38,15 @@ ap.add_argument("--modes", nargs="+", default=MODES)
 ap.add_argument("--epochs", type=int, default=0, help="0 = 25 for smoke test, 30 for full")
 ap.add_argument("--batch", type=int, default=0, help="0 = 8 for base, 4 for bigger variants (GPU memory)")
 ap.add_argument("--lr", type=float, default=5e-4)
+ap.add_argument("--seed", type=int, default=0, help="random start; seed N>0 saves to <run>_sN so seed 0 is kept")
 args = ap.parse_args()
-tag = run_tag(args.limit, args.variant)
+data_tag = run_tag(args.limit, args.variant)                   # which samples (subset file)
+tag = data_tag + (f"_s{args.seed}" if args.seed else "")       # where models / curves go
 cfg = VARIANTS[args.variant]
 args.batch = args.batch or (8 if cfg["T"] * cfg["win"] ** 2 <= 27 else 4)
 epochs = args.epochs or (25 if args.limit else 30)
 dev = "cuda" if torch.cuda.is_available() else "cpu"
-torch.manual_seed(0)
+torch.manual_seed(args.seed)
 
 
 def loss_fn(logits, target):
@@ -75,7 +77,7 @@ def run_epoch(model, loader, opt=None):
 
 
 if __name__ == "__main__":
-    subset = json.load(open(os.path.join(ROOT, "data", "samples", f"subset_{tag}.json")))
+    subset = json.load(open(os.path.join(ROOT, "data", "samples", f"subset_{data_tag}.json")))
     train = DataLoader(FeatureSamples([s for s in subset if s["split"] == "train"], with_white=True),
                        batch_size=args.batch, shuffle=True, num_workers=0)
     val = DataLoader(FeatureSamples([s for s in subset if s["split"] == "val"], with_white=True), batch_size=args.batch)
@@ -100,6 +102,10 @@ if __name__ == "__main__":
             if va_iou > best:
                 best = va_iou
                 torch.save(model.state_dict(), os.path.join(MDIR, f"{mode}.pt"))
+            el = time.time() - t0
+            print(f"  [{mode} {args.modes.index(mode) + 1}/{len(args.modes)}] epoch {ep + 1:2d}/{epochs}  "
+                  f"train loss {tr_loss:.3f}  val loss {va_loss:.3f}  val IoU {va_iou:.3f} (best {best:.3f})  "
+                  f"{el / 60:.1f} min, ~{el / (ep + 1) * (epochs - ep - 1) / 60:.0f} min left for this model", flush=True)
         log[mode] = hist
         print(f"{mode:10s} best val object-IoU {best:.3f}   last train loss {tr_loss:.3f}   ({time.time() - t0:.0f}s)")
 
